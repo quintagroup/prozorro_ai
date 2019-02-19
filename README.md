@@ -16,7 +16,7 @@ Install with npm:
 Include the latest release directly from GitHub.
 
 ```js
-<script src="https://github.com/quintagroup/prozorro-suggestions/prozorro_suggestions.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prozorro_suggestions@1.0.1/prozorro_suggestions.min.js></script>
 ```
 
 OR
