@@ -43,14 +43,14 @@ The example would be as follows:
 
 **Find unit based on tender's title, description, item description and classification.**
 ```js
-import Prozorro_Suggestions from "Prozorro_Suggestions";
+import Prozorro_Suggestions from "prozorro_suggestions";
 // const Prozorro_Suggestions = require('Prozorro_Suggestions');
 Prozorro_Suggestions.units.suggest({
   tenderTitle: 'string',
   tenderDescription: 'string',
   itemDescription: 'string',
   itemClassification: 'string'
-}, {accuracyCutoff: 'string/number', limit: 'string/number'}))
+}, {accuracyCutoff: 'string/number', limit: 'string/number'})
 .then(response => {
   console.log(response);
 }, error => {
