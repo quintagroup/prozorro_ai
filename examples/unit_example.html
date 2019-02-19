@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.4"></script>
+    <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    <style>
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+        }
+        input {
+            padding: 4px;
+            margin-bottom: 10px;
+        }
+        .loader {
+            width: 40px;
+            float: right;
+            position: absolute;
+            right: -40px;
+            top: 36%;
+        }
+        .btn {margin-bottom: 4px;padding: 4px;}
+        .code {color: #d406c6}
+        ol {font-size: 14px;line-height: 1.4;}
+        code span {color: black}
+        .tab-pane {outline: none}
+        .card-body {padding-top: 0}
+        .two-rows:first-child {padding-left: 0}
+        .two-rows:last-child {padding-right: 0}
+        .selector:focus {box-shadow:none; border-color: #ced4da;}
+        .selector {
+            outline: none;
+            -webkit-animation: jump 1.5s ease 0s infinite normal ;
+            animation: jump 1.5s ease 0s 1 normal ;
+        }
+        @keyframes jump {
+            0%{
+                transform: translateY(0);
+            }
+            20%{
+                transform: translateY(0);
+            }
+            40%{
+                transform: translateY(-12px);
+                border: 2px solid #b8cca4;
+            }
+            50%{
+                transform: translateY(0);
+            }
+            60%{
+                transform: translateY(-7px);
+                border: 1px solid #b8cca4;
+            }
+            80%{
+                transform: translateY(0);
+            }
+            100%{
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script src="../prozorro_suggestions.min.js"></script>
+    <script>
+        Vue.component('demo-component', {
+            template: '#demo-component',
+            data: function () {
+                return {
+                    form: {
+                        tenderName: '',
+                        tenderDescription: '',
+                        tenderPrice: '',
+                        item: [
+                            {
+                                itemName: '',
+                                itemCount: '',
+                                itemClassification: ''
+                            }
+                        ]
+                    },
+                    response: [],
+                    suggestions: {},
+                    showLoader: false,
+                    unitCodes: {},
+                    tabs: [1],
+                    tabActive: 1,
+                    tabCounter: 2,
+                    selectedValue: [null],
+                    timer: false,
+                    timerTimeCall: 700,
+                    showAnimation: false,
+                    animationTimeout: false
+                };
+            },
+            created () {
+                this.$http.get('./static/unit_codes.json')
+                  .then(resp => {
+                      this.unitCodes = resp.body;
+                  })
+            },
+            methods: {
+                changeInput () {
+                    clearTimeout(this.timer);
+                    let vm = this;
+                    this.timer = setTimeout(function(){
+                        vm.getSuggestions()
+                    }, this.timerTimeCall);
+                },
+                addExample (data) {
+                    this.form.tenderName = data.tname;
+                    this.form.tenderDescription = data.tdesc;
+                    this.form.tenderPrice = data.tvalue;
+                    this.form.item[this.tabActive-1].itemName = data.iname;
+                    this.form.item[this.tabActive-1].itemCount = data.count;
+                    this.form.item[this.tabActive-1].itemClassification = data.class;
+                    this.getSuggestions();
+                },
+                getSuggestions (index) {
+                    this.showLoader = true;
+                    let tabNumber;
+                    if (index  >= 0) {
+                        tabNumber = index;
+                    } else {
+                        tabNumber = this.tabs.length - 1
+                    }
+                  let itemDescription = '', itemClassification = '';
+                  if (this.form.item[tabNumber]) {
+                      if (this.form.item[tabNumber].itemName) {
+                          itemDescription = this.form.item[tabNumber].itemName;
+                      }
+                      if (this.form.item[tabNumber].itemClassification) {
+                          itemClassification = this.form.item[tabNumber].itemClassification
+                      }
+                  }
+
+                  Prozorro_Suggestions.units.suggest({
+                      tenderTitle: this.form.tenderName,
+                      tenderDescription: this.form.tenderDescription,
+                      itemDescription: itemDescription,
+                      itemClassification: itemClassification
+                  }, {accuracyCutoff: 0.02, limit: 5})
+                      .then(response => {
+                          this.response = response;
+                          window.Vue = Vue;
+                          Vue.set(this.suggestions, [tabNumber], response);
+                          this.showLoader = false;
+                          let maxItem;
+                          let maxProbability = 0;
+                          this.suggestions[tabNumber].forEach((item) => {
+                              if (item.accuracy > maxProbability) {
+                                  maxProbability = item.accuracy;
+                                  maxItem = item;
+                              }
+                          });
+                          if (maxItem) {
+                              Vue.set(this.selectedValue, [tabNumber], maxItem.name)
+                          }
+                      }, error => {
+                          this.showLoader = false
+                      });
+                },
+                closeTab (x) {
+                    for (let i = 1; i < this.tabs.length; i++) {
+                        if (this.tabs[i] === x) {
+                            this.tabs.splice(i, 1)
+                        }
+                    }
+                },
+                newTab () {
+                    this.form.item[this.tabCounter - 1] = {
+                        itemName: '',
+                        itemCount: '',
+                        itemClassification: ''
+                    };
+                    this.selectedValue[this.tabCounter - 1] = null;
+                    this.tabs.push(this.tabCounter++);
+                }
+            },
+            watch: {
+                selectedValue: function () {
+                    this.showAnimation = true;
+                },
+                showAnimation: function() {
+                    clearTimeout(this.animationTimeout)
+                    let vm = this;
+                    this.animationTimeout = setTimeout(function(){
+                        vm.showAnimation = false;
+                    }, 1500);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="vue-app">
+        <demo-component></demo-component>
+    </div>
+    <script type="x-template" id="demo-component">
+        <div>
+            <b-row>
+                <b-col cols="7">
+                    <div class="main-section m-3">
+                        <b-row>
+                            <b-col cols="9">
+                                <b-form-group label="Назва:"
+                                              label-for="exampleInput2">
+                                    <b-form-input id="tenderName"
+                                                  @input="changeInput"
+                                                  type="text"
+                                                  v-model="form.tenderName"
+                                                  required
+                                                  placeholder="Введіть назву закупівлі">
+                                    </b-form-input>
+                                </b-form-group>
+                            </b-col>
+                            <b-col cols="3">
+                                <b-form-group label="Очікувана вартість:"
+                                              label-for="exampleInput2">
+                                    <b-input-group append="грн.">
+                                    <b-form-input id="tenderPrice"
+                                                  type="text"
+                                                  v-model="form.tenderPrice"
+                                                  required
+                                                  placeholder="Вартість">
+                                    </b-form-input>
+                                    </b-input-group>
+                                </b-form-group>
+                            </b-col>
+                        </b-row>
+                        <b-form-group label="Опис:"
+                                      label-for="exampleInput2">
+                            <b-form-textarea id="tenderDiscription"
+                                          type="text"
+                                          @blur.native="getSuggestions"
+                                          v-model="form.tenderDescription"
+                                          required
+                                          rows="3"
+                                          max-rows="6"
+                                          placeholder="Введіть опис закупівлі" />
+                        </b-form-group>
+                    </div>
+                </b-col>
+                <b-col cols="5" class="p-4">
+                    <div>Приклади запитів:</div>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Паливо',
+                            tdesc: 'Бензин А-95 повинен відповідати діючим державним стандартам, технічним умовам та чинному законодавству України.',
+                            tvalue: '28000',
+                            iname: 'Бензин А-95',
+                            class: '09130000-9',
+                            count: '1000'
+                        })">Бензин</b-button>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Картопля рання',
+                            tdesc: '',
+                            tvalue: '15000',
+                            iname: 'Картопля рання',
+                            class: '15310000-4',
+                            count: '1200'
+                        })">Картопля</b-button>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Кава',
+                            tdesc: '',
+                            tvalue: '200000',
+                            iname: 'Кава та кавові напої',
+                            class: '15860000-4',
+                            count: '65000'
+                        })">Кава</b-button>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Технічне обслуговування і ремонт офісної техніки',
+                            tdesc: 'Послуги з технічного обслуговування принтерів',
+                            tvalue: '50000',
+                            iname: 'Послуги з технічного обслуговування принтерів та картриджів',
+                            class: '50310000-1',
+                            count: '1'
+                        })">Ремонт</b-button>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Електроенергія',
+                            tdesc: 'Електроенергія для вуличного освітлення',
+                            tvalue: '400000',
+                            iname: 'Електроенергія включно з послугою постачання.',
+                            class: '09310000-5',
+                            count: '140000'
+                        })">Електроенергія</b-button>
+                    <b-button @click="addExample(
+                        {
+                            tname: 'Тканини бавовняні',
+                            tdesc: 'Відбілений сатин',
+                            tvalue: '12000',
+                            iname: 'Сатин відбілений. Склад - 100% бавовна, щільність тканини 135 г/м2, ширина 200 см',
+                            class: '19212000-5',
+                            count: '150'
+                        })">Тканина</b-button>
+                    <hr />
+                    <div>Запит:</div>
+                    <code>
+                        Prozorro_Suggestions.units({<br />
+                        &ensp; tenderTitle: '</code><span>{{form.tenderName}}</span><code>',<br />
+                        &ensp; tenderDescription: '</code><span>{{form.tenderDescription}}</span><code>',<br />
+                        &ensp; itemDescription: '</code><span>{{form.item[tabActive-1].itemName}}</span><code>',<br />
+                        &ensp; itemClassification: '</code><span>{{form.item[tabActive-1].itemClassification}}</span><code>',<br />
+                        }).then(response => {<br />
+                        &ensp; console.log(response)<br />
+                        }, error => {<br />
+                        &ensp; console.log(error)<br />
+                        })<br />
+                    </code>
+                </b-col>
+            </b-row>
+                <b-tabs card>
+                    <b-tab :title="`Предмет закупівлі ${i}`" @click="tabActive = i; getSuggestions(i)" v-for="i in tabs" :key="i">
+                        <b-btn v-if="i > 1" size="sm" variant="danger" class="float-right mt-2" @click="()=>closeTab(i)">
+                            Закрити вкладку
+                        </b-btn>
+                        <br />
+                        <b-row>
+                            <b-col cols="7">
+                                <div class="main-section">
+                                    <b-form-group label="Предмет закупівлі:"
+                                                  label-for="itemName">
+                                        <b-form-input id="itemName"
+                                                      type="text"
+                                                      @blur.native="getSuggestions(i-1)"
+                                                      v-model="form.item[i-1].itemName"
+                                                      required
+                                                      placeholder="Введіть конкретну назву предмета закупівлі">
+                                        </b-form-input>
+                                    </b-form-group>
+                                    <b-container>
+                                        <b-row>
+                                            <b-col cols="7" class="two-rows">
+                                                <b-form-group id="itemClassification"
+                                                              label="Класифікатор ДК 021:2015:"
+                                                              label-for="itemClassification">
+                                                    <b-form-input id="exampleInput2"
+                                                                  type="text"
+                                                                  @blur.native="getSuggestions(i-1)"
+                                                                  v-model="form.item[i-1].itemClassification"
+                                                                  required
+                                                                  placeholder="Введіть класифікатор">
+                                                    </b-form-input>
+                                                </b-form-group>
+                                            </b-col>
+                                            <b-col cols="2" class="two-rows">
+                                                <b-form-group label="Кількість:"
+                                                              label-for="itemCount">
+                                                    <b-form-input id="exampleInput2"
+                                                                  type="number"
+                                                                  v-model="form.item[i-1].itemCount"
+                                                                  required
+                                                                  placeholder="К-сть">
+                                                    </b-form-input>
+                                                </b-form-group>
+                                            </b-col>
+                                            <b-col cols="3" class="two-rows">
+                                                <label class="mr-sm-2" for="selectedValue">Одиниці виміру:</label>
+                                                <b-form-select class="mb-2 mr-sm-2 mb-sm-0"
+                                                               :class="{'selector': showAnimation}"
+                                                               :value="selectedValue[i-1]"
+                                                               id="selectedValue">
+                                                    <option disabled slot="first" :value="null">...</option>
+                                                    <optgroup label="Рекомендовані">
+                                                        <option v-for="suggestion in suggestions[i-1]" :key="suggestion.id">
+                                                            {{suggestion.name}}
+                                                        </option>
+                                                    </optgroup>
+                                                    <optgroup label="Усі">
+                                                        <option v-for="code in unitCodes" :key="code.name_uk">{{code.name_uk}}</option>
+                                                    </optgroup>
+                                                </b-form-select>
+                                                <img src="static/loader.gif" v-if="showLoader" class="loader" alt="Загрузка рекомендацій">
+                                            </b-col>
+                                        </b-row>
+                                    </b-container>
+                                </div>
+                            </b-col>
+                            <b-col cols="5" class="p-4">
+                                <div v-if="response.length">Відповідь:</div>
+                                <ol start="0">
+                                    <li v-for="item in response">
+                                        <div v-for="(element, key, index) in item"><span class="code">{{key}}:</span> {{element}}</div>
+                                    </li>
+                                </ol>
+                            </b-col>
+                        </b-row>
+                    </b-tab>
+                    <b-nav-item slot="tabs" @click.prevent="newTab" href="#">
+                        +
+                    </b-nav-item>
+                </b-tabs>
+        </div>
+    </script>
+    <script>
+        var app = new Vue({
+            el: '#vue-app'
+        });
+    </script>
+</body>
+</html>
