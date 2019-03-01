@@ -1,6 +1,6 @@
 # Description 
 
-This subsystem is designed to provide predictions based on machine learning modules.
+This subsystem is designed to provide predictions based on machine learning models.
 
 ## Installation
 
@@ -62,7 +62,7 @@ Prozorro_AI.client().unit.suggest({
 })
 ```
 
-[Try it](https://ocdsanalytics.com/ua/prozorro/suggestions/docs/examples/unit.html)
+[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit.html)
 
 ### Classification prediction
 Based on the inputs, you can get the most probable classification.
@@ -80,7 +80,7 @@ Based on the inputs, you can get the most probable classification.
 **Find classification based on tender's title and description, item's description and unit of measure.**
 ```js
 import Prozorro_AI from "prozorro_ai";
-// const Prozorro_AI = require('Prozorro_ai');
+// const Prozorro_AI = require('prozorro_ai');
 Prozorro_AI.client().classification.suggest({
   tenderTitle: 'string',
   tenderDescription: 'string',
