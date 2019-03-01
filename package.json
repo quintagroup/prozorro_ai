@@ -1,0 +1,24 @@
+{
+  "name": "prozorro_ai",
+  "version": "1.0.0",
+  "description": "This subsystem is designed to provide predictions based on machine learning modules.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quintagroup/prozorro_ai.git"
+  },
+  "keywords": [
+    "prozorro",
+    "suggestions"
+  ],
+  "author": "Quintagroup",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/quintagroup/prozorro_ai/issues"
+  },
+  "homepage": "https://github.com/quintagroup/prozorro_ai#readme",
+  "dependencies": {}
+}
