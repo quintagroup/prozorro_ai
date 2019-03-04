@@ -46,20 +46,45 @@ Based on the inputs, you can get the most probable unit of measurement.
 The example would be as follows:
 
 **Find unit of measurement based on tender's title and description, item's description and classification.**
+Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
 Prozorro_AI.client().unit.suggest({
-  tenderTitle: 'string',
-  tenderDescription: 'string',
-  itemDescription: 'string',
-  itemClassification: 'string'
-}, {accuracyCutoff: 'string/number', limit: 'string/number'})
+  tenderTitle: 'Тканини бавовняні',
+  tenderDescription: 'Відбілений сатин',
+  itemDescription: 'Сатин відбілений. Склад - 100% бавовна, ширина 200 см',
+  itemClassification: '19212000-5'
+}, {accuracyCutoff: '0.02', limit: '5'})
 .then(response => {
   console.log(response);
 }, error => {
   console.log(error);
 })
+```
+
+Response:
+```js
+[
+	{
+	  id: 'MTR',
+      name: 'метри',
+      symbol: 'м',
+      accuracy: 0.5046774744987488
+	},
+	{
+	  id: 'LM',
+      name: 'Погонний метр',
+      symbol: 'пог.м.',
+      accuracy: 0.40248599648475647
+	},
+	{
+	  id: 'H87',
+      name: 'штуки',
+      symbol: 'шт.',
+      accuracy: 0.05680004507303238
+	}
+]
 ```
 
 [Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit.html)
@@ -78,20 +103,44 @@ Based on the inputs, you can get the most probable classification.
 
 
 **Find classification based on tender's title and description, item's description and unit of measure.**
+Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
 Prozorro_AI.client().classification.suggest({
-  tenderTitle: 'string',
-  tenderDescription: 'string',
-  itemDescription: 'string',
-  itemUnit: 'string'
-}, {accuracyCutoff: 'string/number', limit: 'string/number'})
+  tenderTitle: 'Технічне обслуговування і ремонт офісної техніки',
+  tenderDescription: 'Послуги з технічного обслуговування принтерів та картриджів',
+  itemDescription: 'Послуги з технічного обслуговування принтерів',
+  itemUnit: 'E48'
+}, {accuracyCutoff: '0.02', limit: '5'})
 .then(response => {
   console.log(response);
 }, error => {
   console.log(error);
 })
+```
+Response:
+```js
+[
+	{
+	  id: '50310000-1',
+      description: 'Технічне обслуговування і ремонт офісної техніки',
+      scheme: 'ДК021',
+      accuracy: 0.23198238015174866
+	},
+	{
+	  id: '50323000-5',
+      description: 'Ремонт і технічне обслуговування комп’ютерних периферійних пристроїв',
+      scheme: 'ДК021',
+      accuracy: 0.07701390236616135
+	},
+	{
+	  id: '50320000-4',
+      description: 'Послуги з ремонту і технічного обслуговування персональних комп’ютерів',
+      scheme: 'ДК021',
+      accuracy: 0.07315685600042343
+	}
+]
 ```
 
 
