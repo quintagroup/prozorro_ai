@@ -1,6 +1,6 @@
 # Description 
 
-This subsystem is designed to provide predictions based on machine learning models.
+This subsystem is designed to provide suggestions based on machine learning models.
 
 ## Installation
 
@@ -28,11 +28,11 @@ OR
 
 ## Usage
 
-Whenever you ask for a collection of resources, you will receive a `Prediction` object which gives you access to a page of results at a time.
-
 ### Unit prediction
 
 Based on the inputs, you can get the most probable unit of measurement.
+
+[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit.html)
 
 |№|property|description|type|required|default|
 |:-|:-|:-|:-|:-|:-|
@@ -87,10 +87,10 @@ Response:
 ]
 ```
 
-[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit.html)
-
 ### Classification prediction
 Based on the inputs, you can get the most probable classification.
+
+[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/classification.html)
 
 |№|property|description|type|required|default|
 |:-|:-|:-|:-|:-|:-|
