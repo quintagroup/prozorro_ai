@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ProZorro AI Item Unit suggestions - Підказки одиниць виміру предмету закупівлі для ProZorro</title>
-    <meta name="description" content="Demo - unit of measurement suggestions based on the inputs">
+    <title>ProZorro AI Item Classification suggestions - Підказки класифікатора предмету закупівлі для ProZorro</title>
+    <meta name="description" content="Demo - Сlassification suggestions based on the inputs">
     <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
     <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
@@ -115,7 +115,6 @@
         }
         .main-block {background-color: #f2f4f5;}
     </style>
-
     <script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.0.1/prozorro_ai.min.js"></script>
     <script>
         Vue.component('demo-component', {
@@ -142,6 +141,7 @@
                     tabActive: 1,
                     tabCounter: 2,
                     selectedValue: [null],
+                    selectedUnit: [null],
                     timer: false,
                     timerTimeCall: 700,
                     showAnimation: false,
@@ -177,6 +177,7 @@
                     this.form.tenderDescription = '';
                     this.form.tenderPrice = '';
                     this.selectedValue = [null];
+                    this.selectedUnit[this.tabActive-1] = ''
                     this.response = [];
                     this.suggestions = {}
                 },
@@ -193,7 +194,7 @@
                     this.form.tenderPrice = data.tvalue;
                     this.form.item[this.tabActive-1].itemName = data.iname;
                     this.form.item[this.tabActive-1].itemCount = data.count;
-                    this.form.item[this.tabActive-1].itemClassification = data.class;
+                    this.selectedUnit[this.tabActive-1] = data.unit
                     this.getSuggestions([this.tabActive]);
                 },
                 getSuggestions (index) {
@@ -214,11 +215,11 @@
                         }
                     }
 
-                    Prozorro_AI.client().units.suggest({
+                    Prozorro_AI.client().classification.suggest({
                         tenderTitle: this.form.tenderName,
                         tenderDescription: this.form.tenderDescription,
                         itemDescription: itemDescription,
-                        itemClassification: itemClassification
+                        itemUnit: this.selectedUnit[this.tabActive-1]
                     }, {accuracyCutoff: 0.02, limit: 5})
                         .then(response => {
                             this.response = response;
@@ -234,12 +235,13 @@
                                 }
                             });
                             if (maxItem) {
-                                Vue.set(this.selectedValue, [tabNumber], maxItem.name);
+                                Vue.set(this.selectedValue, [tabNumber], maxItem.description);
                                 if (this.selectedValue[tabNumber] !== this.oldSelectedValue[tabNumber]) {
                                     this.showAnimation = true;
                                 }
-                                this.oldSelectedValue[tabNumber] = maxItem.name;
+                                this.oldSelectedValue[tabNumber] = maxItem.description;
                             }
+
                         }, error => {
                             this.showLoader = false
                         });
@@ -287,11 +289,11 @@
                 <br />
                 <b-row align-v="center" >
                     <b-col cols="12" md="7">
-                        <span class="sub-header mr-5">Item Unit suggestion</span>
+                        <span class="sub-header mr-5">Item Classification suggestion</span>
                         <div class="sub-header-div mt-1">
                             Приклад того, як може виглядати створення закупівельної процедури з увімкненими підказками. З бібліотекою prozorro_ai система
-                            пропонує одиниці виміру відповідно до заповнених полів: "Назва", "Опис", "Предмет закупівлі" чи "Класифікатор".
-                            Поле "Одиниці виміру" заповнюється, якщо точність у відповіді більша 45%.
+                            пропонує класифікатори ДК 021:2015 відповідно до заповнених полів: "Назва", "Опис", "Предмет закупівлі" чи "Одиниця виміру".
+                            Поле "Класифікатор" заповнюється, якщо точність у відповіді більша 45%.
                         </div>
                     </b-col>
                 </b-row>
@@ -345,14 +347,14 @@
                         <div class="code-header pl-3">Запит:</div>
                         <div class="pl-3 pt-2">
                             <code>
-                                Prozorro_AI.client().units.suggest({<br />
+                                Prozorro_AI.client().classification.suggest({<br />
                                 &ensp; tenderTitle: '</code><span>{{form.tenderName}}</span><code>',<br />
-                            &ensp; tenderDescription: '</code><span>{{form.tenderDescription}}</span><code>',<br />
-                            &ensp; itemDescription: '</code><span>{{form.item[tabActive-1].itemName}}</span><code>',<br />
-                            &ensp; itemClassification: '</code><span>{{form.item[tabActive-1].itemClassification}}</span><code>',<br />
-                            }).then(response => {console.log(response)}, <br />
-                            error => {console.log(error)})<br />
-                        </code>
+                                &ensp; tenderDescription: '</code><span>{{form.tenderDescription}}</span><code>',<br />
+                                &ensp; itemDescription: '</code><span>{{form.item[tabActive-1].itemName}}</span><code>',<br />
+                                &ensp; itemUnit: '</code><span>{{selectedUnit[tabActive-1]}}</span><code>',<br />
+                                }).then(response => {console.log(response)}, <br />
+                                error => {console.log(error)})<br />
+                             </code>
                         </div>
                     </b-col>
                 </b-row>
@@ -385,14 +387,17 @@
                                                         <b-form-group id="itemClassification"
                                                                       label="Класифікатор ДК 021:2015:"
                                                                       label-for="itemClassification">
-                                                            <b-form-input id="exampleInput2"
-                                                                          type="text"
-                                                                          class="border-blue"
-                                                                          @blur.native="getSuggestions(i-1)"
-                                                                          v-model="form.item[i-1].itemClassification"
-                                                                          required
-                                                                          placeholder="Введіть класифікатор">
-                                                            </b-form-input>
+                                                            <b-form-select class="mb-2 mr-sm-2 mb-sm-0 border-green"
+                                                                           :class="{'selector': showAnimation}"
+                                                                           v-model="selectedValue[i-1]"
+                                                                           id="selectedValue">
+                                                                <option disabled slot="first" :value="null">...</option>
+                                                                <optgroup label="Рекомендовані">
+                                                                    <option v-for="suggestion in suggestions[i-1]" :key="suggestion.id">
+                                                                        {{suggestion.description}}
+                                                                    </option>
+                                                                </optgroup>
+                                                            </b-form-select>
                                                         </b-form-group>
                                                     </b-col>
                                                     <b-col cols="12" md="3" class="two-rows">
@@ -407,17 +412,12 @@
                                                         </b-form-group>
                                                     </b-col>
                                                     <b-col cols="12" md="4" class="two-rows">
-                                                        <label class="mr-sm-2" for="selectedValue">Одиниці виміру:</label>
-                                                        <b-form-select class="mb-2 mr-sm-2 mb-sm-0 border-green"
-                                                                       :class="{'selector': showAnimation}"
-                                                                       v-model="selectedValue[i-1]"
-                                                                       id="selectedValue">
+                                                        <label class="mr-sm-2" for="selectedUnit">Одиниці виміру:</label>
+                                                        <b-form-select class="mb-2 mr-sm-2 mb-sm-0 border-blue"
+                                                                       @input="changeInput"
+                                                                       v-model="selectedUnit[i-1]"
+                                                                       id="selectedUnit">
                                                             <option disabled slot="first" :value="null">...</option>
-                                                            <optgroup label="Рекомендовані">
-                                                                <option v-for="suggestion in suggestions[i-1]" :key="suggestion.id">
-                                                                    {{suggestion.name}}
-                                                                </option>
-                                                            </optgroup>
                                                             <optgroup label="Усі">
                                                                 <option v-for="code in unitCodes" :key="code.name_uk">{{code.name_uk}}</option>
                                                             </optgroup>
@@ -444,8 +444,8 @@
                         </ol>
                         <div v-else class="pl-3 pt-2">
                             <div><span class="code">id: </span> </div>
-                            <div><span class="code">name:</span> </div>
-                            <div><span class="code">symbol: </span> </div>
+                            <div><span class="code">description:</span> </div>
+                            <div><span class="code">scheme: </span> </div>
                             <div><span class="code">accuracy: </span> </div>
                         </div>
                     </b-col>
@@ -460,7 +460,7 @@
                                     tdesc: 'Бензин А-95 повинен відповідати діючим державним стандартам, технічним умовам та чинному законодавству України.',
                                     tvalue: '',
                                     iname: 'Бензин А-95',
-                                    class: '09130000-9',
+                                    unit: 'літр',
                                     count: ''
                                 })">Бензин</b-button>
                             <b-button variant="success" @click="addExample(
@@ -469,7 +469,7 @@
                                     tdesc: '',
                                     tvalue: '',
                                     iname: 'Картопля рання',
-                                    class: '15310000-4',
+                                    unit: 'кілограми',
                                     count: ''
                                 })">Картопля</b-button>
                             <b-button variant="success" @click="addExample(
@@ -478,7 +478,7 @@
                                     tdesc: '',
                                     tvalue: '',
                                     iname: 'Кава та кавові напої',
-                                    class: '15860000-4',
+                                    unit: 'кілограми',
                                     count: ''
                                 })">Кава</b-button>
                             <b-button variant="success" @click="addExample(
@@ -487,7 +487,7 @@
                                     tdesc: 'Послуги з технічного обслуговування принтерів',
                                     tvalue: '',
                                     iname: 'Послуги з технічного обслуговування принтерів та картриджів',
-                                    class: '50310000-1',
+                                    unit: 'послуга',
                                     count: ''
                                 })">Ремонт</b-button>
                             <b-button variant="success" @click="addExample(
@@ -496,7 +496,7 @@
                                     tdesc: 'Електроенергія для вуличного освітлення',
                                     tvalue: '',
                                     iname: 'Електроенергія включно з послугою постачання.',
-                                    class: '09310000-5',
+                                    unit: 'Кіловат-година',
                                     count: ''
                                 })">Електроенергія</b-button>
                             <b-button variant="success" @click="addExample(
@@ -505,7 +505,7 @@
                                     tdesc: 'Відбілений сатин',
                                     tvalue: '',
                                     iname: 'Сатин відбілений. Склад - 100% бавовна, щільність тканини 135 г/м2, ширина 200 см',
-                                    class: '19212000-5',
+                                    unit: 'метри',
                                     count: ''
                                 })">Тканина</b-button>
                         </div>
