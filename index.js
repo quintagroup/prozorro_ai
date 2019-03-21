@@ -110,7 +110,7 @@ const item = {
                 });
         }
     },
-    classification: {
+    classifications: {
         suggest: function (data, settings) {
             return request (data, settings, 'classifications')
                 .then(r => r.json())

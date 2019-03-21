@@ -16,7 +16,7 @@ Install with npm:
 Include the latest script directly from npm.
 
 ```js
-<script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.0.0/prozorro_ai.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.0.2/prozorro_ai.min.js"></script>
 ```
 
 OR
@@ -50,7 +50,7 @@ Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
-Prozorro_AI.client().unit.suggest({
+Prozorro_AI.client().units.suggest({
   tenderTitle: 'Тканини бавовняні',
   tenderDescription: 'Відбілений сатин',
   itemDescription: 'Сатин відбілений. Склад - 100% бавовна, ширина 200 см',
@@ -107,7 +107,7 @@ Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
-Prozorro_AI.client().classification.suggest({
+Prozorro_AI.client().classifications.suggest({
   tenderTitle: 'Технічне обслуговування і ремонт офісної техніки',
   tenderDescription: 'Послуги з технічного обслуговування принтерів та картриджів',
   itemDescription: 'Послуги з технічного обслуговування принтерів',
