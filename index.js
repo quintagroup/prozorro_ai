@@ -75,7 +75,8 @@ request = function (data, settings, itemType) {
         method: 'POST',
         headers: {
             "Content-Type": "application/json",
-            'accept': '*/*'
+            'accept': '*/*',
+            "Authorization": "Bearer " + params.apiKey
         },
         body: query
     })

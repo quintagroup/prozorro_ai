@@ -2,6 +2,8 @@
 
 This subsystem is designed to provide suggestions based on machine learning models.
 
+**Notice! It is recommended to use this library starting from version 1.1.0  that introduces authentication via an API key.**
+
 ## Installation
 
 ### Node
@@ -16,7 +18,7 @@ Install with npm:
 Include the latest script directly from npm.
 
 ```js
-<script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.0.2/prozorro_ai.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.1.0/prozorro_ai.min.js"></script>
 ```
 
 OR
@@ -27,6 +29,20 @@ OR
 
 
 ## Usage
+
+### Authentication
+
+This library requires authentication via an API key. 
+The API key is issued after the registration confirmation on the [https://ocdsanalytics.com/](https://ocdsanalytics.com/register/) website. 
+You can find it in the API section on the [Account page](https://ocdsanalytics.com/account/).
+
+Use API key as follows:
+
+```js
+Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).units.suggest({
+...
+})
+```
 
 ### Unit prediction
 
@@ -46,11 +62,12 @@ Based on the inputs, you can get the most probable unit of measurement.
 The example would be as follows:
 
 **Find unit of measurement based on tender's title and description, item's description and classification.**
+
 Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
-Prozorro_AI.client().units.suggest({
+Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).units.suggest({
   tenderTitle: 'Тканини бавовняні',
   tenderDescription: 'Відбілений сатин',
   itemDescription: 'Сатин відбілений. Склад - 100% бавовна, ширина 200 см',
@@ -103,11 +120,12 @@ Based on the inputs, you can get the most probable classification.
 
 
 **Find classification based on tender's title and description, item's description and unit of measure.**
+
 Request:
 ```js
 import Prozorro_AI from "prozorro_ai";
 // const Prozorro_AI = require('prozorro_ai');
-Prozorro_AI.client().classifications.suggest({
+Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).classifications.suggest({
   tenderTitle: 'Технічне обслуговування і ремонт офісної техніки',
   tenderDescription: 'Послуги з технічного обслуговування принтерів та картриджів',
   itemDescription: 'Послуги з технічного обслуговування принтерів',

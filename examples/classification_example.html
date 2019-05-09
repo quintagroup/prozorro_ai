@@ -115,7 +115,8 @@
         }
         .main-block {background-color: #f2f4f5;}
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.0.2/prozorro_ai.min.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.1.0/prozorro_ai.min.js"></script>-->
+    <script src="../prozorro_ai.min.js"></script>
     <script>
         Vue.component('demo-component', {
             template: '#demo-component',
@@ -215,7 +216,9 @@
                         }
                     }
 
-                    Prozorro_AI.client().classification.suggest({
+                    // In order to get an API key, please register on the https://ocdsanalytics.com/ website and you will be able to find your API key on the Account page.
+
+                    Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).classifications.suggest({
                         tenderTitle: this.form.tenderName,
                         tenderDescription: this.form.tenderDescription,
                         itemDescription: itemDescription,

@@ -1,6 +1,6 @@
 {
   "name": "prozorro_ai",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "This subsystem is designed to provide predictions based on machine learning modules.",
   "main": "index.js",
   "directories": {
