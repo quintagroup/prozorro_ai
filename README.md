@@ -30,6 +30,28 @@ OR
 
 ## Usage
 
+### Import
+
+Import script to use *Prozorro_AI*.
+
+For *webpack*:
+
+``` js
+import Prozorro_AI from "prozorro_ai"
+```
+
+For *requirejs*:
+
+``` js
+const Prozorro_AI = require('prozorro_ai')
+```
+
+For *cdn*:
+
+``` html
+<script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.1.0/prozorro_ai.min.js"></script>
+```
+
 ### Authentication
 
 This library requires authentication via an API key. 
