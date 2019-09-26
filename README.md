@@ -70,7 +70,7 @@ Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).units.suggest({
 
 Based on the inputs, you can get the most probable unit of measurement.
 
-[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit.html)
+[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/unit/)
 
 |№|property|description|type|required|default|
 |:-|:-|:-|:-|:-|:-|
@@ -129,7 +129,7 @@ Response:
 ### Classification prediction
 Based on the inputs, you can get the most probable classification.
 
-[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/classification.html)
+[Try it](https://ocdsanalytics.com/ua/prozorro/ai/docs/examples/classification/)
 
 |№|property|description|type|required|default|
 |:-|:-|:-|:-|:-|:-|
