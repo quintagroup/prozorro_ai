@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ProZorro AI Item suggestions - Підказки класифікатора предмету закупівлі для ProZorro</title>
+    <meta name="description" content="Demo - suggestions based on the inputs">
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.4"></script>
+    <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    <style>
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+        }
+        input {
+            padding: 4px;
+            margin-bottom: 10px;
+        }
+        .loader {
+            width: 40px;
+            float: right;
+            position: absolute;
+            right: -40px;
+            top: 36%;
+        }
+        .btn {margin-bottom: 4px;padding: 4px;}
+        .code {color: #e83e8c !important;}
+        ol {font-size: 14px;line-height: 1.4; color: white !important; margin-left: 20px}
+        code {font-size: 13px; color: #c0cc00 !important;}
+        code span {color: black}
+        .tab-pane {outline: none}
+        .card-body {padding-top: 0}
+        .two-rows:first-child {padding-left: 0}
+        .two-rows:last-child {padding-right: 0}
+        .selector:focus {box-shadow:none; border-color: #ced4da;}
+        .border-blue {border: 2px solid #03303f}
+        .border-green {border: 3px solid #2fa74a}
+        .btn-danger {padding-right: 20px; background: url('./static/delete.png') no-repeat 96% #a10000}
+        .btn {font-size: 14px;font-weight: 600;}
+        .black-section {background-color:  #001823}
+        .black-section span, .black-section div {font-size: 13px;color: white;}
+        .flex-justify {display: flex; flex-direction: row; align-items: center; justify-content: space-between}
+        .code-header { background-color: #425b6d; }
+        .selector {
+            outline: none;
+            -webkit-animation: jump 1.5s ease 0s infinite normal ;
+            animation: jump 1.5s ease 0s 1 normal ;
+        }
+        hr {margin-bottom: 0;}
+        .card-header {background-color: #e9eced;}
+        .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active, .second-section {background-color: #f2f4f5; border: none;}
+        .clear-all {position: fixed;bottom: 4px;right: 5px; z-index: 999}
+        .link {font-weight: 600;}
+        .row {margin-right: 0; margin-left: 0}
+        @keyframes jump {
+            0%{
+                transform: translateY(0);
+            }
+            20%{
+                transform: translateY(0);
+            }
+            40%{
+                transform: translateY(-12px);
+                border: 2px solid #b8cca4;
+            }
+            50%{
+                transform: translateY(0);
+            }
+            60%{
+                transform: translateY(-7px);
+                border: 1px solid #b8cca4;
+            }
+            80%{
+                transform: translateY(0);
+            }
+            100%{
+                transform: translateY(0);
+            }
+        }
+        .demo-sidebar {
+            position: relative;
+            width: 100%;
+            border-right: 1px solid #eaecef;
+            font-size: 15px;
+            margin-top: 56px;
+            padding-top: 28px;
+            padding-left: 40px;
+        }
+        .demo-sidebar p {
+            font-size: 16px;
+            margin-left: 16px;
+            cursor: pointer;
+        }
+        .demo-sidebar p:hover {color: #3eaf7c;}
+        .sub-header {
+            color: #000000;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 18px;
+            /* Text style for "Item Unit" */
+            letter-spacing: 0.18px;
+            padding-left: 14px;
+        }
+        .sub-header-div {
+            padding-left: 14px;
+            color: #777575;
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 16px;
+            letter-spacing: 0.55px;
+        }
+        .main-block {background-color: #f2f4f5;}
+    </style>
+    <!--    <script src="https://cdn.jsdelivr.net/npm/prozorro_ai@1.1.0/prozorro_ai.min.js"></script>-->
+    <script src="../index.js"></script>
+    <script>
+        Vue.component('demo-component', {
+            template: '#demo-component',
+            data: function () {
+                return {
+                    form: {
+                        tenderName: '',
+                        tenderDescription: '',
+                        tenderPrice: '',
+                        item: [
+                            {
+                                itemName: '',
+                                itemCount: '',
+                                itemClassification: ''
+                            }
+                        ]
+                    },
+                    response: [],
+                    suggestions: {},
+                    showLoader: false,
+                    unitCodes: {},
+                    tabs: [1],
+                    tabActive: 1,
+                    tabCounter: 2,
+                    selectedValue: [null],
+                    selectedUnit: [null],
+                    timer: false,
+                    timerTimeCall: 700,
+                    showAnimation: false,
+                    animationTimeout: false,
+                    oldSelectedValue: [],
+                    oldSelectedUnit: []
+                };
+            },
+            created () {
+                this.$http.get('./static/unit_codes.json')
+                    .then(resp => {
+                        this.unitCodes = resp.body;
+                    })
+            },
+            methods: {
+                pinInput (field) {
+                    this[field] = !this[field]
+                },
+                clearAll () {
+                    if (this.form.item.length === 1) {
+                        this.form.item = [
+                            {
+                                itemName: '',
+                                itemCount: '',
+                                itemClassification: ''
+                            }
+                        ]
+                    } else {
+                        this.form.item.forEach(item => {
+                            item.itemName = '';
+                            item.itemCount = '';
+                            item.itemClassification = ''
+                        });
+                    }
+
+                    this.form.tenderName = '';
+                    this.form.tenderDescription = '';
+                    this.form.tenderPrice = '';
+                    this.selectedValue = [null];
+                    this.selectedUnit[this.tabActive-1] = ''
+                    this.response = [];
+                    this.suggestions = {}
+                },
+                changeInput () {
+                    clearTimeout(this.timer);
+                    let vm = this;
+                    this.timer = setTimeout(function(){
+                        vm.getSuggestions()
+                    }, this.timerTimeCall);
+                },
+                addExample (data) {
+                    this.form.tenderName = data.tname;
+                    this.form.tenderDescription = data.tdesc;
+                    this.form.tenderPrice = data.tvalue;
+                    this.form.item[this.tabActive-1].itemName = data.iname;
+                    this.form.item[this.tabActive-1].itemCount = data.count;
+                    this.selectedUnit[this.tabActive-1] = data.unit
+                    this.getSuggestions([this.tabActive]);
+                },
+                getSuggestions (index) {
+                    this.showLoader = true;
+                    let tabNumber;
+                    if (index >= 0) {
+                        tabNumber = index - 1;
+                    } else {
+                        tabNumber = this.tabs.length - 1
+                    }
+                    let itemDescription = '', itemClassification = '';
+                    if (this.form.item[tabNumber]) {
+                        if (this.form.item[tabNumber].itemName) {
+                            itemDescription = this.form.item[tabNumber].itemName;
+                        }
+                        if (this.form.item[tabNumber].itemClassification) {
+                            itemClassification = this.form.item[tabNumber].itemClassification
+                        }
+                    }
+
+                    // In order to get an API key, please register on the https://ocdsanalytics.com/ website and you will be able to find your API key on the Account page.
+                    Prozorro_AI.client({apiKey: 'Insert your API_KEY here'}).suggest({
+                        tenderTitle: this.form.tenderName,
+                        tenderDescription: this.form.tenderDescription,
+                        itemDescription: itemDescription,
+                        itemUnit: this.selectedUnit[this.tabActive-1]
+                    }, {accuracyCutoff: 0.02, limit: 5})
+                        .then(response => {
+                            this.response = response;
+                            window.Vue = Vue;
+                            Vue.set(this.suggestions, [tabNumber], response);
+                            this.showLoader = false;
+                            let maxItem;
+                            let maxItemUnit;
+                            let maxProbability = 0;
+                            let maxProbabilityUnit = 0;
+                            this.suggestions[tabNumber].classification.forEach((item) => {
+                                if (item.accuracy > maxProbability && item.accuracy > 0.45) {
+                                    maxProbability = item.accuracy;
+                                    maxItem = item;
+                                }
+                            });
+                            this.suggestions[tabNumber].unit.forEach((item) => {
+                                if (item.accuracy > maxProbabilityUnit && item.accuracy > 0.45) {
+                                    maxProbabilityUnit = item.accuracy;
+                                    maxItemUnit = item;
+                                }
+                            });
+                            if (maxItem) {
+                                Vue.set(this.selectedValue, [tabNumber], maxItem.description);
+                                if (this.selectedValue[tabNumber] !== this.oldSelectedValue[tabNumber]) {
+                                    this.showAnimation = true;
+                                }
+                                this.oldSelectedValue[tabNumber] = maxItem.description;
+                            }
+                            if (maxItemUnit) {
+                                Vue.set(this.selectedUnit, [tabNumber], maxItemUnit.name);
+                                if (this.selectedUnit[tabNumber] !== this.oldSelectedUnit[tabNumber]) {
+                                    this.showAnimation = true;
+                                }
+                                this.oldSelectedUnit[tabNumber] = maxItemUnit.name;
+                            }
+                        }, error => {
+                            this.showLoader = false
+                        });
+                },
+                closeTab (x) {
+                    for (let i = 1; i < this.tabs.length; i++) {
+                        if (this.tabs[i] === x) {
+                            this.tabs.splice(i, 1)
+                        }
+                    }
+                    this.tabActive--;
+                },
+                newTab () {
+                    this.form.item[this.tabCounter - 1] = {
+                        itemName: '',
+                        itemCount: '',
+                        itemClassification: ''
+                    };
+                    this.selectedValue[this.tabCounter - 1] = null;
+
+                    this.tabs.push(this.tabCounter);
+                    this.tabCounter++;
+                }
+            },
+            watch: {
+                showAnimation: function() {
+                    clearTimeout(this.animationTimeout)
+                    let vm = this;
+                    this.animationTimeout = setTimeout(function(){
+                        vm.showAnimation = false;
+                    }, 1500);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+<div id="vue-app">
+    <demo-component></demo-component>
+</div>
+<script type="x-template" id="demo-component">
+    <div style="position: relative">
+        <b-row>
+            <b-col cols="12" col sm="12" md="12" lg="12" class="p-0">
+                <br />
+                <b-row align-v="center" >
+                    <b-col cols="12" md="7">
+                        <span class="sub-header mr-5">Item suggestion</span>
+                        <div class="sub-header-div mt-1">
+                            Приклад того, як може виглядати створення закупівельної процедури з увімкненими підказками. З бібліотекою prozorro_ai система
+                            пропонує класифікатори ДК 021:2015 відповідно до заповнених полів: "Назва", "Опис", "Предмет закупівлі" чи "Одиниця виміру".
+                            Поле "Класифікатор" заповнюється, якщо точність у відповіді більша 45%.
+                        </div>
+                    </b-col>
+                </b-row>
+                <hr />
+                <b-row>
+                    <b-col cols="12" md="7" class="main-block">
+                        <div class="main-section m-3">
+                            <b-row>
+                                <b-col cols="12" md="7" class="pl-0">
+                                    <b-form-group label="Назва:"
+                                                  label-for="exampleInput2">
+                                        <b-form-input id="tenderName"
+                                                      @input="changeInput"
+                                                      type="text"
+                                                      v-model="form.tenderName"
+                                                      required
+                                                      class="border-blue"
+                                                      placeholder="Введіть назву закупівлі">
+                                        </b-form-input>
+                                    </b-form-group>
+                                </b-col>
+                                <b-col cols="12" md="5" class="pr-0">
+                                    <b-form-group label="Очікувана вартість:"
+                                                  label-for="exampleInput2">
+                                        <b-input-group append="грн.">
+                                            <b-form-input id="tenderPrice"
+                                                          type="text"
+                                                          v-model="form.tenderPrice"
+                                                          required
+                                                          placeholder="Вартість">
+                                            </b-form-input>
+                                        </b-input-group>
+                                    </b-form-group>
+                                </b-col>
+                            </b-row>
+                            <b-form-group label="Опис:"
+                                          label-for="exampleInput2">
+                                <b-form-textarea id="tenderDiscription"
+                                                 type="text"
+                                                 class="border-blue"
+                                                 @input="changeInput"
+                                                 @blur.native="getSuggestions"
+                                                 v-model="form.tenderDescription"
+                                                 rows="3"
+                                                 max-rows="6"
+                                                 placeholder="Введіть опис закупівлі" />
+                            </b-form-group>
+                        </div>
+                    </b-col>
+                    <b-col cols="12" md="5" class="pt-2 pl-1 pr-1 black-section">
+                        <div class="code-header pl-3">Запит:</div>
+                        <div class="pl-3 pt-2">
+                            <code>
+                                Prozorro_AI.client().suggest({<br />
+                                &ensp; tenderTitle: '</code><span>{{form.tenderName}}</span><code>',<br />
+                            &ensp; tenderDescription: '</code><span>{{form.tenderDescription}}</span><code>',<br />
+                            &ensp; itemDescription: '</code><span>{{form.item[tabActive-1].itemName}}</span><code>',<br />
+                            &ensp; itemUnit: '</code><span>{{selectedUnit[tabActive-1]}}</span><code>',<br />
+                            }).then(response => {console.log(response)}, <br />
+                            error => {console.log(error)})<br />
+                        </code>
+                        </div>
+                    </b-col>
+                </b-row>
+                <b-row>
+                    <b-col md="7" class="p-0 second-section">
+                        <b-tabs card>
+                            <b-tab :title="`Предмет закупівлі ${i}`" @click="tabActive = i; getSuggestions(i)" v-for="i in tabs" :key="i">
+                                <b-btn v-if="i > 1" size="sm" variant="danger" class="float-right mt-2" @click="()=>closeTab(i)">
+                                    Закрити вкладку
+                                </b-btn>
+                                <br />
+                                <b-row>
+                                    <b-col cols="12" md="12">
+                                        <div class="main-section">
+                                            <b-form-group label="Предмет закупівлі:"
+                                                          label-for="itemName">
+                                                <b-form-input id="itemName"
+                                                              type="text"
+                                                              class="border-blue"
+                                                              @input="changeInput"
+                                                              @blur.native="getSuggestions(i-1)"
+                                                              v-model="form.item[i-1].itemName"
+                                                              required
+                                                              placeholder="Введіть конкретну назву предмета закупівлі">
+                                                </b-form-input>
+                                            </b-form-group>
+                                            <b-container class="p-0">
+                                                <b-row>
+                                                    <b-col cols="12" md="5" class="two-rows">
+                                                        <b-form-group id="itemClassification"
+                                                                      label="Класифікатор ДК 021:2015:"
+                                                                      label-for="itemClassification">
+                                                            <b-form-select class="mb-2 mr-sm-2 mb-sm-0 border-green"
+                                                                           :class="{'selector': showAnimation}"
+                                                                           @input="changeInput"
+                                                                           v-model="selectedValue[i-1]"
+                                                                           id="selectedValue">
+                                                                <option disabled slot="first" :value="null">...</option>
+                                                                <optgroup v-if="suggestions[i-1]" label="Рекомендовані">
+                                                                    <option v-for="suggestion in suggestions[i-1].classification" :key="suggestion.id">
+                                                                        {{suggestion.description}}
+                                                                    </option>
+                                                                </optgroup>
+                                                                <optgroup v-else label="Рекомендовані">
+                                                                    <option v-for="suggestion in suggestions[i-1]" :key="suggestion.id">
+                                                                        {{suggestion.description}}
+                                                                    </option>
+                                                                </optgroup>
+                                                            </b-form-select>
+                                                        </b-form-group>
+                                                    </b-col>
+                                                    <b-col cols="12" md="3" class="two-rows">
+                                                        <b-form-group label="Кількість:"
+                                                                      label-for="itemCount">
+                                                            <b-form-input id="exampleInput2"
+                                                                          type="number"
+                                                                          v-model="form.item[i-1].itemCount"
+                                                                          required
+                                                                          placeholder="К-сть">
+                                                            </b-form-input>
+                                                        </b-form-group>
+                                                    </b-col>
+                                                    <b-col cols="12" md="4" class="two-rows">
+                                                        <label class="mr-sm-2" for="selectedUnit">Одиниці виміру:</label>
+                                                        <b-form-select class="mb-2 mr-sm-2 mb-sm-0 border-green"
+                                                                       :class="{'selector': showAnimation}"
+                                                                       @input="changeInput"
+                                                                       v-model="selectedUnit[i-1]"
+                                                                       id="selectedUnit">
+                                                            <option disabled slot="first" :value="null">...</option>
+                                                            <optgroup label="Усі">
+                                                                <option v-for="code in unitCodes" :key="code.name_uk">{{code.name_uk}}</option>
+                                                            </optgroup>
+                                                        </b-form-select>
+                                                        <img src="static/loader.gif" v-if="showLoader" class="loader" alt="Загрузка рекомендацій">
+                                                    </b-col>
+                                                </b-row>
+                                            </b-container>
+                                        </div>
+                                    </b-col>
+                                </b-row>
+                            </b-tab>
+                            <b-nav-item slot="tabs" @click.prevent="newTab" href="#">
+                                Додати
+                            </b-nav-item>
+                        </b-tabs>
+                    </b-col>
+                    <b-col cols="12" md="5" class="black-section pt-2 pl-1 pr-1">
+                        <div class="code-header code-header pl-3">Відповідь:</div>
+                        <pre style="height: 400px" v-if="response" class="pl-3 pt-2 code">{{response}}</pre>
+                    </b-col>
+                </b-row>
+                <b-row>
+                    <b-col cols="12" md="7" class="flex-justify mt-4">
+                        <div>
+                            <span style="font-size: 15px">Приклади запитів:</span>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Паливо',
+                                    tdesc: 'Бензин А-95 повинен відповідати діючим державним стандартам, технічним умовам та чинному законодавству України.',
+                                    tvalue: '',
+                                    iname: 'Бензин А-95',
+                                    unit: 'літр',
+                                    count: ''
+                                })">Бензин</b-button>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Картопля рання',
+                                    tdesc: '',
+                                    tvalue: '',
+                                    iname: 'Картопля рання',
+                                    unit: 'кілограми',
+                                    count: ''
+                                })">Картопля</b-button>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Кава',
+                                    tdesc: '',
+                                    tvalue: '',
+                                    iname: 'Кава та кавові напої',
+                                    unit: 'кілограми',
+                                    count: ''
+                                })">Кава</b-button>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Технічне обслуговування і ремонт офісної техніки',
+                                    tdesc: 'Послуги з технічного обслуговування принтерів',
+                                    tvalue: '',
+                                    iname: 'Послуги з технічного обслуговування принтерів та картриджів',
+                                    unit: 'послуга',
+                                    count: ''
+                                })">Ремонт</b-button>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Електроенергія',
+                                    tdesc: 'Електроенергія для вуличного освітлення',
+                                    tvalue: '',
+                                    iname: 'Електроенергія включно з послугою постачання.',
+                                    unit: 'Кіловат-година',
+                                    count: ''
+                                })">Електроенергія</b-button>
+                            <b-button variant="success" @click="addExample(
+                                {
+                                    tname: 'Тканини бавовняні',
+                                    tdesc: 'Відбілений сатин',
+                                    tvalue: '',
+                                    iname: 'Сатин відбілений. Склад - 100% бавовна, щільність тканини 135 г/м2, ширина 200 см',
+                                    unit: 'метри',
+                                    count: ''
+                                })">Тканина</b-button>
+                        </div>
+                        <b-button @click="clearAll()" class="btn btn-danger">Очистити все</b-button>
+                    </b-col>
+                </b-row>
+            </b-col>
+        </b-row>
+    </div>
+</script>
+<script>
+    var app = new Vue({
+        el: '#vue-app'
+    });
+</script>
+</body>
+</html>

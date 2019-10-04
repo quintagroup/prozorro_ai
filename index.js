@@ -42,13 +42,58 @@ request = function (data, settings, itemType) {
                 }
               `
         });
-    } else {
+    } else if (itemType === 'classifications') {
         query = JSON.stringify({
             query: `
                 {
                   Predictions {
                     Classification(
                       page: {limit: ` + limit + `},
+                      filters:[
+                        {eq: {field: "tender.title", value: "` + (data.tenderTitle ? data.tenderTitle : '') + `"}},
+                        {eq: {field: "tender.description", value: "` + (data.tenderDescription ? data.tenderDescription : '') + `"}},
+                        {eq: {field: "item.description", value: "` + (data.itemDescription ? data.itemDescription : '') + `"}},
+                        {eq: {field: "item.unit.id", value: "` + (data.itemUnit ? data.itemUnit : '') + `"}},
+                        {gte: {field: "probability", value: "` + cutOffLevel + `"}}
+                      ]){
+                      values{
+                        entity{
+                          id,
+                          description,
+                          scheme
+                        }
+                        probability
+                      }
+                    }
+                  }
+                }
+              `
+        });
+    } else {
+        query = JSON.stringify({
+            query: `
+                {
+                  Predictions {
+                    Unit(
+                      page: {limit: 5},
+                      filters:[
+                        {eq: {field: "tender.title", value: "` + (data.tenderTitle ? data.tenderTitle : '') + `"}},
+                        {eq: {field: "tender.description", value: "` + (data.tenderDescription ? data.tenderDescription : '') + `"}},
+                        {eq: {field: "item.description", value: "` + (data.itemDescription ? data.itemDescription : '') + `"}},
+                        {eq: {field: "item.classification.id", value: "` + (data.itemClassification ? data.itemClassification : '') + `"}},
+                        {gte: {field: "probability", value: "` + cutOffLevel + `"}}
+                      ]){
+                      values{
+                        entity{
+                          id,
+                          name,
+                          symbol
+                        }
+                        probability
+                      }
+                    }
+                     Classification(
+                      page: {limit: 5},
                       filters:[
                         {eq: {field: "tender.title", value: "` + (data.tenderTitle ? data.tenderTitle : '') + `"}},
                         {eq: {field: "tender.description", value: "` + (data.tenderDescription ? data.tenderDescription : '') + `"}},
@@ -113,7 +158,7 @@ const item = {
     },
     classifications: {
         suggest: function (data, settings) {
-            return request (data, settings, 'classifications')
+            return request (data, settings)
                 .then(r => r.json())
                 .then(data => {
                     let values = [];
@@ -138,6 +183,56 @@ const item = {
                     return err
                 });
         }
+    },
+    suggest: function (data, settings) {
+        return request (data, settings)
+            .then(r => r.json())
+            .then(data => {
+                let values = {};
+                if (data.data.Predictions.Classification.values) {
+                    let classification = [];
+                    data.data.Predictions.Classification.values.forEach((value) => {
+                        let returnObject = {};
+                        if (value.entity.id) {
+                            returnObject.id = value.entity.id;
+                        }
+                        if (value.entity.description) {
+                            returnObject.description = value.entity.description;
+                        }
+                        if (value.entity.scheme) {
+                            returnObject.scheme = value.entity.scheme;
+                        }
+                        if (value.probability) {
+                            returnObject.accuracy = value.probability;
+                        }
+                        classification.push(returnObject)
+                    });
+                    values.classification = classification;
+                }
+                if (data.data.Predictions.Unit.values) {
+                    let unit = [];
+                    data.data.Predictions.Unit.values.forEach((value) => {
+                        let returnObject = {};
+                        if (value.entity.id) {
+                            returnObject.id = value.entity.id;
+                        }
+                        if (value.entity.name) {
+                            returnObject.name = value.entity.name;
+                        }
+                        if (value.entity.symbol) {
+                            returnObject.symbol = value.entity.symbol;
+                        }
+                        if (value.probability) {
+                            returnObject.accuracy = value.probability;
+                        }
+                        unit.push(returnObject)
+                    });
+                    values.unit = unit;
+                }
+                return values;
+            }, (err) => {
+                return err
+            });
     }
 };
 
@@ -148,4 +243,4 @@ class Prozorro_AI {
     }
 }
 
-module.exports = Prozorro_AI;
+// module.exports = Prozorro_AI;
