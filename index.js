@@ -243,4 +243,4 @@ class Prozorro_AI {
     }
 }
 
-// module.exports = Prozorro_AI;
+module.exports = Prozorro_AI;
